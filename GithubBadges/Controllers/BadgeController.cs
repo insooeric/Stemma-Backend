@@ -171,7 +171,7 @@ namespace GithubBadges.Controllers
                     {
                         UserId = userBucketName,
                         BadgeName = fileName,
-                        BadgeURL = $"https://githubbadges.onrender.com/api/badge?badge={fileName}"
+                        BadgeURL = $"https://stemma.onrender.com/api/badge?badge={fileName}"
                     });
                 }
 
@@ -232,7 +232,7 @@ namespace GithubBadges.Controllers
                     {
                         UserId = userBucketName,
                         BadgeName = fileName,
-                        BadgeURL = $"https://githubbadges.onrender.com/api/badge?user={userBucketName}&badge={fileName}",
+                        BadgeURL = $"https://stemma.onrender.com/api/badge?user={userBucketName}&badge={fileName}",
                         ImageType = fileExtension
                     });
                 }

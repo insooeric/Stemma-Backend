@@ -51,7 +51,7 @@ namespace GithubBadges.Controllers
                 Expires = DateTime.UtcNow.AddHours(2)
             });
 
-            string redirectUrl = isDevMode ? "http://localhost:3000/" : "https://badgehub.vercel.app/";
+            string redirectUrl = isDevMode ? "http://localhost:3000/" : "https://sigilbadge.vercel.app/";
             string htmlContent = $@"
     <!DOCTYPE html>
     <html>

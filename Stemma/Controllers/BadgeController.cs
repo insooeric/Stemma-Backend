@@ -54,7 +54,7 @@ namespace Stemma.Controllers
         }
 
         [HttpPost("upload-badge")]
-        [Authorize] // MAKE SURE TO UNCOMMENT THIS
+        [Authorize] // MAKE SURE TO UNCOMMENT THIS 
         public async Task<IActionResult> UploadBadgeAsync([FromForm] BadgeUploadRequest request)
         {
             try

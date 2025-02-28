@@ -2,6 +2,7 @@
 
 namespace Stemma.Middlewares
 {
+    // yeet
     public static class ProfileHelper
     {
         public static string GetProfileSvg(string base64Image, string userName)

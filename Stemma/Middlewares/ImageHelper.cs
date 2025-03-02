@@ -450,5 +450,27 @@ namespace Stemma.Middlewares
                             + svg.Substring(match.Index + match.Length);
             return result;
         }
+
+        public static async Task<IFormFile> DownloadImageAsFormFileAsync(string imageUrl)
+        {
+            using (var client = new HttpClient())
+            {
+                // GitHub API requires a User-Agent header.
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("StemmaApp");
+                var response = await client.GetAsync(imageUrl);
+                response.EnsureSuccessStatusCode();
+
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                {
+                    var memoryStream = new MemoryStream();
+                    await stream.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+
+                    // Create a FormFile from the memory stream.
+                    IFormFile formFile = new FormFile(memoryStream, 0, memoryStream.Length, "avatar", "avatar.jpg");
+                    return formFile;
+                }
+            }
+        }
     }
 }

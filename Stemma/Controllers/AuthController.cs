@@ -113,7 +113,7 @@ namespace Stemma.Controllers
         }
 
 
-        private async Task<string> ExchangeCodeForToken(string code)
+        private async Task<string?> ExchangeCodeForToken(string code)
         {
             var client = _httpClientFactory.CreateClient();
             var request = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token");
@@ -126,7 +126,6 @@ namespace Stemma.Controllers
                 clientId = devMode_Client_ID;
                 clientSecret = devMode_Client_Secret;
             }
-
 
             var body = new Dictionary<string, string>
             {
@@ -155,24 +154,24 @@ namespace Stemma.Controllers
             request.Headers.UserAgent.ParseAdd("MyApp");
 
             var response = await client.SendAsync(request);
-            if (!response.IsSuccessStatusCode) return (null, null, null, null);
+            if (!response.IsSuccessStatusCode) return (string.Empty, string.Empty, string.Empty, string.Empty);
 
             var json = await response.Content.ReadAsStringAsync();
             var userObj = JObject.Parse(json);
 
-            var id = userObj["id"]?.ToString();
-            var login = userObj["login"]?.ToString();
-            var avatarUrl = userObj["avatar_url"]?.ToString();
+            var id = userObj["id"]?.ToString() ?? string.Empty;
+            var login = userObj["login"]?.ToString() ?? string.Empty;
+            var avatarUrl = userObj["avatar_url"]?.ToString() ?? string.Empty;
 
             var emailRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user/emails");
             emailRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             emailRequest.Headers.UserAgent.ParseAdd("MyApp");
             var emailResponse = await client.SendAsync(emailRequest);
-            if (!emailResponse.IsSuccessStatusCode) return (id, login, null, avatarUrl);
+            if (!emailResponse.IsSuccessStatusCode) return (id, login, string.Empty, avatarUrl);
 
             var emailJson = await emailResponse.Content.ReadAsStringAsync();
             var emailArr = JArray.Parse(emailJson);
-            var primaryEmail = emailArr.FirstOrDefault(e => e["primary"]?.Value<bool>() == true)?["email"]?.ToString();
+            var primaryEmail = emailArr.FirstOrDefault(e => e["primary"]?.Value<bool>() == true)?["email"]?.ToString() ?? string.Empty;
 
             return (id, login, primaryEmail, avatarUrl);
         }
@@ -181,7 +180,10 @@ namespace Stemma.Controllers
         {
             var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
 
-            /*            Console.WriteLine($"JWT_SECRET: {jwtSecret}");*/
+            if (string.IsNullOrEmpty(jwtSecret))
+            {
+                throw new InvalidOperationException("JWT_SECRET environment variable is not set.");
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -208,9 +210,13 @@ namespace Stemma.Controllers
         private ClaimsPrincipal ValidateJwtToken(string token)
         {
             var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
-            /*            Console.WriteLine($"JWT_SECRET: {jwtSecret}");*/
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 
+            if (string.IsNullOrEmpty(jwtSecret))
+            {
+                throw new InvalidOperationException("JWT_SECRET environment variable is not set.");
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 
             var handler = new JwtSecurityTokenHandler();
             var parameters = new TokenValidationParameters

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using DotNetEnv;
 
 namespace Stemma.Middlewares
 {
@@ -13,7 +15,10 @@ namespace Stemma.Middlewares
 
         static GitHubHelper()
         {
+            Env.Load();
+            string github_api_token = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN") ?? "";
             client.DefaultRequestHeaders.UserAgent.ParseAdd("StemmaApp");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", github_api_token);
         }
 
         public static async Task<string> GetData(string url)

@@ -275,7 +275,7 @@ namespace Stemma.Middlewares
             }
             catch (Exception ex)
             {
-                throw new Exception("Something went wrong :(");
+                throw new Exception($"Something went wrong :( {ex.Message}");
             }
         }
 

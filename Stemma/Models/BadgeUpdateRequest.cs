@@ -2,8 +2,8 @@
 {
     public class BadgeUpdateRequest
     {
-        public string UserId { get; set; }
-        public string OldName { get; set; }
-        public string NewName { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string OldName { get; set; } = string.Empty;
+        public string NewName { get; set; } = string.Empty;
     }
 }

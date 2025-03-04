@@ -2,7 +2,7 @@
 {
     public class UserInfoProfileRequest
     {
-        public string GithubUserName { get; set; }
-        public string FullName { get; set; }
+        public string GithubUserName { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
     }
 }

@@ -2,9 +2,9 @@
 {
     public class BadgeObject
     {
-        public string UserId { get; set; }
-        public string BadgeName { get; set; }
-        public string BadgeURL { get; set; }
-        public string ImageType { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string BadgeName { get; set; } = string.Empty;
+        public string BadgeURL { get; set; } = string.Empty;
+        public string ImageType { get; set; } = string.Empty;
     }
 }

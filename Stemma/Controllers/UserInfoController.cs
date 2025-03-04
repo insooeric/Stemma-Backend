@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Stemma.Middlewares;
 using Stemma.Models;
 using Stemma.Models.Github;
@@ -11,6 +12,13 @@ namespace Stemma.Controllers
     [ApiController]
     public class UserInfoController : ControllerBase
     {
+        private readonly IMemoryCache _cache;
+
+        public UserInfoController(IMemoryCache cache)
+        {
+            _cache = cache;
+        }
+
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfileAsync([FromQuery] UserInfoProfileRequest request)
         {
@@ -86,26 +94,37 @@ namespace Stemma.Controllers
                 Dictionary<string, int> totalLanguages = new Dictionary<string, int>();
 
                 // !!!MAKE SURE TO UNCOMMENT THIS!!!
-                string json = await GitHubHelper.GetData($"https://api.github.com/users/{GitHubUserName}/repos", ["name"]);
-                List<GithubRepoModel> repos = new List<GithubRepoModel>();
-                repos = JsonSerializer.Deserialize<List<GithubRepoModel>>(json);
-
-
-                List<GithubProjectModel> repoDetails = new List<GithubProjectModel>();
-
-
-                foreach (GithubRepoModel repo in repos)
+                string json = await GitHubHelper.GetData($"https://api.github.com/users/{GitHubUserName}/repos", new string[] { "name" });
+                List<GithubRepoModel>? repos = JsonSerializer.Deserialize<List<GithubRepoModel>>(json);
+                if (repos == null)
                 {
-                    string detailjson = await GitHubHelper.GetData($"https://api.github.com/repos/{GitHubUserName}/{repo.Name}", ["name"]);
-                    GithubProjectModel repodetail = JsonSerializer.Deserialize<GithubProjectModel>(detailjson);
-                    repoDetails.Add(repodetail);
+                    return BadRequest(new { Message = "Failed to retrieve repositories from GitHub." });
                 }
 
-                // !!!MAKE SURE TO UNCOMMENT THIS!!!
-                foreach (GithubRepoModel repo in repos)
+                //string json = await GitHubHelper.GetData($"https://api.github.com/users/{GitHubUserName}/repos", ["name"]);
+                //List<GithubRepoModel> repos = new List<GithubRepoModel>();
+                //repos = JsonSerializer.Deserialize<List<GithubRepoModel>>(json);
+
+                // Parallelize the language requests for each repository.
+                var languageTasks = repos.Select(async repo =>
                 {
                     string detailjson = await GitHubHelper.GetData($"https://api.github.com/repos/{GitHubUserName}/{repo.Name}/languages");
-                    Dictionary<string, int> repoLanguages = JsonSerializer.Deserialize<Dictionary<string, int>>(detailjson);
+                    return JsonSerializer.Deserialize<Dictionary<string, int>>(detailjson);
+                });
+
+                Dictionary<string, int>?[] languagesArray = await Task.WhenAll(languageTasks);
+                if (languagesArray.Any(l => l == null))
+                {
+                    return BadRequest(new { Message = "Failed to retrieve languages for some repositories from GitHub." });
+                }
+
+                // Combine language data from all repositories.
+                foreach (var repoLanguages in languagesArray)
+                {
+                    if (repoLanguages == null)
+                    {
+                        continue;
+                    }
 
                     foreach (var dicObject in repoLanguages)
                     {
@@ -119,6 +138,36 @@ namespace Stemma.Controllers
                         }
                     }
                 }
+
+
+                // List<GithubProjectModel> repoDetails = new List<GithubProjectModel>();
+
+
+                //foreach (GithubRepoModel repo in repos)
+                //{
+                //    string detailjson = await GitHubHelper.GetData($"https://api.github.com/repos/{GitHubUserName}/{repo.Name}", ["name"]);
+                //    GithubProjectModel repodetail = JsonSerializer.Deserialize<GithubProjectModel>(detailjson);
+                //    repoDetails.Add(repodetail);
+                //}
+
+                //// !!!MAKE SURE TO UNCOMMENT THIS!!!
+                //foreach (GithubRepoModel repo in repos)
+                //{
+                //    string detailjson = await GitHubHelper.GetData($"https://api.github.com/repos/{GitHubUserName}/{repo.Name}/languages");
+                //    Dictionary<string, int> repoLanguages = JsonSerializer.Deserialize<Dictionary<string, int>>(detailjson);
+
+                //    foreach (var dicObject in repoLanguages)
+                //    {
+                //        if (totalLanguages.ContainsKey(dicObject.Key))
+                //        {
+                //            totalLanguages[dicObject.Key] += dicObject.Value;
+                //        }
+                //        else
+                //        {
+                //            totalLanguages[dicObject.Key] = dicObject.Value;
+                //        }
+                //    }
+                //}
 
 
                 // !!! DUMMY DATA MAKE SURE TO COMMENT THIS !!!
@@ -141,6 +190,8 @@ namespace Stemma.Controllers
                 var sortTotalLanguage = totalLanguages
                     .OrderByDescending(kvp => kvp.Value)
                     .ToList();
+
+                _cache.Set($"{GitHubUserName}-Languages", sortTotalLanguage, TimeSpan.FromMinutes(10));
 
 
 
@@ -213,6 +264,17 @@ namespace Stemma.Controllers
             {
                 return BadRequest(new { Message = $"Unable to retrieve language statistics from user {ex.Message}" });
             }
+        }
+
+        [HttpGet("sortedlanguages")]
+        public IActionResult GetSortedLanguages([FromQuery] string GitHubUserName)
+        {
+            if (_cache.TryGetValue($"{GitHubUserName}-Languages", out object? value) && value is List<KeyValuePair<string, int>> sortedLanguages)
+            {
+                _cache.Remove($"{GitHubUserName}-Languages");
+                return Ok(sortedLanguages);
+            }
+            return NotFound(new { Message = $"Unable to retrieve language list for user {GitHubUserName}. Either it has expired after 10 minutes or server failed to store it." });
         }
 
     }

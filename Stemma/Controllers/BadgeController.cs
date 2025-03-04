@@ -298,7 +298,7 @@ namespace Stemma.Controllers
                 string userBucketName = request.UserId;
                 string oldObjectPrefix = $"{userBucketName}/{request.OldName}";
                 var matchingObjects = storageClient.ListObjectsAsync(BucketName, oldObjectPrefix);
-                Google.Apis.Storage.v1.Data.Object oldBadgeObject = null;
+                Google.Apis.Storage.v1.Data.Object? oldBadgeObject = null;
 
                 await foreach (var file in matchingObjects)
                 {
@@ -387,7 +387,7 @@ namespace Stemma.Controllers
                 string prefix = $"{userBucketName}/{fileName}";
 
                 var matchingObjects = storageClient.ListObjectsAsync(BucketName, prefix);
-                Google.Apis.Storage.v1.Data.Object badgeObject = null;
+                Google.Apis.Storage.v1.Data.Object? badgeObject = null;
 
                 await foreach (var file in matchingObjects)
                 {
@@ -600,14 +600,14 @@ namespace Stemma.Controllers
                         // Console.WriteLine($"\nLoaded SVG:\n{item.imageInSvg}\n");
                         // THAT FUCING WORKS!
 
+                        // if image object is still null, return error
+                        if (item.imageObject == null)
+                        {
+                            return BadRequest(new { Message = $"Could not find the badge named \"{item.imageName}\"" });
+                        }
+
                         string ext = Path.GetExtension(item.imageObject.Name).ToLower(); // should be .svg
                         item.imageExtension = ext;
-                    }
-
-                    // if image object is still null, return error
-                    if (item.imageObject == null)
-                    {
-                        return BadRequest(new { Message = $"Could not find the badge named \"{item.imageName}\"" });
                     }
                 }
                 // }

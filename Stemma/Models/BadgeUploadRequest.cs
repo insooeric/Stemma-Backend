@@ -2,8 +2,8 @@
 {
     public class BadgeUploadRequest
     {
-        public IFormFile BadgeFile { get; set; }
-        public string BadgeName { get; set; }
-        public string UserId { get; set; }
+        public IFormFile BadgeFile { get; set; } = null!;
+        public string BadgeName { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
     }
 }

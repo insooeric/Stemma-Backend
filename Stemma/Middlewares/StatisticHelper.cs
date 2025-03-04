@@ -187,6 +187,7 @@ public static class StatisticHelper
             defsBuilder.AppendLine(grad);
         }
 
+        int titleYPos = 35;
         StringBuilder svg = new StringBuilder();
         svg.AppendLine("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"300\" height=\"285\" viewBox=\"0 0 300 285\" fill=\"none\" role=\"img\" aria-labelledby=\"descId\" x=\"0\" y=\"0\">");
         svg.AppendLine("  <title id=\"descId\">Pie chart</title>");
@@ -195,7 +196,7 @@ public static class StatisticHelper
         svg.Append(defsBuilder.ToString());
         svg.AppendLine("  </defs>");
         svg.AppendLine("  <text fill=\"url(#titleGradient)\" font-size=\"24\" font-weight=\"bold\" font-family=\"Arial, sans-serif\">");
-        svg.AppendLine("    <tspan x=\"110\" y=\"25\">");
+        svg.AppendLine($"    <tspan x=\"110\" y=\"{titleYPos}\">");
         svg.AppendLine("      T");
         svg.AppendLine("      <animate attributeName=\"dy\"");
         svg.AppendLine("               values=\"0;10;0;0\"");
@@ -205,7 +206,7 @@ public static class StatisticHelper
         svg.AppendLine("               dur=\"3.6s\"");
         svg.AppendLine("               repeatCount=\"indefinite\" />");
         svg.AppendLine("    </tspan>");
-        svg.AppendLine("    <tspan x=\"128\" y=\"25\">");
+        svg.AppendLine($"    <tspan x=\"128\" y=\"{titleYPos}\">");
         svg.AppendLine("      o");
         svg.AppendLine("      <animate attributeName=\"dy\"");
         svg.AppendLine("               values=\"0;0;10;0;0\"");
@@ -215,7 +216,7 @@ public static class StatisticHelper
         svg.AppendLine("               dur=\"3.6s\"");
         svg.AppendLine("               repeatCount=\"indefinite\" />");
         svg.AppendLine("    </tspan>");
-        svg.AppendLine("    <tspan x=\"146\" y=\"25\">");
+        svg.AppendLine($"    <tspan x=\"146\" y=\"{titleYPos}\">");
         svg.AppendLine("      p");
         svg.AppendLine("      <animate attributeName=\"dy\"");
         svg.AppendLine("               values=\"0;0;10;0;0\"");
@@ -225,8 +226,8 @@ public static class StatisticHelper
         svg.AppendLine("               dur=\"3.6s\"");
         svg.AppendLine("               repeatCount=\"indefinite\" />");
         svg.AppendLine("    </tspan>");
-        svg.AppendLine("    <tspan x=\"170\" y=\"25\">");
-        svg.AppendLine("      4");
+        svg.AppendLine($"    <tspan x=\"170\" y=\"{titleYPos}\">");
+        svg.AppendLine($"      {items.Count-1}");
         svg.AppendLine("      <animate attributeName=\"dy\"");
         svg.AppendLine("               values=\"0;0;10;0;0\"");
         svg.AppendLine("               keyTimes=\"0;0.417;0.467;0.583;1\"");

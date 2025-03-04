@@ -81,6 +81,11 @@ namespace Stemma.Controllers
                     }
                 }
 
+                //foreach (string name in objectNameList)
+                //{
+                //    Console.WriteLine(name);
+                //}
+
                 if(objectNameList.Count > 5)
                 {
                     return BadRequest(new { Message = "You can only select up to 4 items." });
@@ -192,6 +197,12 @@ namespace Stemma.Controllers
                     .ToList();
 
                 _cache.Set($"{GitHubUserName}-Languages", sortTotalLanguage, TimeSpan.FromMinutes(10));
+
+                //foreach (var dicObject in sortTotalLanguage)
+                //{
+                //    Console.WriteLine($"{dicObject.Key}: {dicObject.Value}");
+                //}
+                //Console.WriteLine("--------------------\n");
 
 
 

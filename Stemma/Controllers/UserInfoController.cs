@@ -86,7 +86,7 @@ namespace Stemma.Controllers
                 //    Console.WriteLine(name);
                 //}
 
-                if(objectNameList.Count > 5)
+                if(objectNameList.Count > 4)
                 {
                     return BadRequest(new { Message = "You can only select up to 4 items." });
                 }

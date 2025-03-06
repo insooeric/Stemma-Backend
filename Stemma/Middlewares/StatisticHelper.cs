@@ -191,7 +191,7 @@ public static class StatisticHelper
         StringBuilder svg = new StringBuilder();
         svg.AppendLine("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"300\" height=\"285\" viewBox=\"0 0 300 285\" fill=\"none\" role=\"img\" aria-labelledby=\"descId\" x=\"0\" y=\"0\">");
         svg.AppendLine("  <title id=\"descId\">Pie chart</title>");
-        svg.AppendLine("  <rect data-testid=\"card-bg\" x=\"0.5\" y=\"0.5\" rx=\"4.5\" width=\"299\" height=\"99%\" fill=\"#242424\" stroke=\"#e4e2e2\" stroke-opacity=\"1\"/>");
+        svg.AppendLine("  <rect data-testid=\"card-bg\" x=\"0.5\" y=\"0.5\" rx=\"4.5\" width=\"299\" height=\"99%\" fill=\"#242424\" stroke=\"#242424\" stroke-opacity=\"1\"/>");
         svg.AppendLine("  <defs>");
         svg.Append(defsBuilder.ToString());
         svg.AppendLine("  </defs>");

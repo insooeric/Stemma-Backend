@@ -154,7 +154,7 @@ namespace Stemma.Middlewares
     </symbol>
   </defs>
   
-  <rect data-testid=""card-bg"" x=""0.5"" y=""0.5"" rx=""4.5"" height=""99%"" width=""299"" fill=""#242424"" stroke=""#e4e2e2"" stroke-opacity=""1""/>
+  <rect data-testid=""card-bg"" x=""0.5"" y=""0.5"" rx=""4.5"" height=""99%"" width=""299"" fill=""#242424"" stroke=""#242424"" stroke-opacity=""1""/>
   
   <svg x=""-30"" y=""-30"" width=""360"" height=""345"" viewBox=""0 0 360 345"">
     <use href=""#starlight1"" x=""-100"" y=""30"" />

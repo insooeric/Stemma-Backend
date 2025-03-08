@@ -65,8 +65,10 @@ builder.Services.AddStackExchangeRedisCache(options =>
 {
     var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "";
     var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "";
+    //Console.WriteLine($"REDIS_HOST: {redisHost}");
+    //Console.WriteLine($"REDIS_PASSWORD: {redisPassword}");
     options.Configuration = $"{redisHost},password={redisPassword}";
-    options.InstanceName = Environment.GetEnvironmentVariable("REDIS_INSTANCE_NAME") ?? "";
+
 });
 
 builder.Services.AddScoped<IRedisService, RedisService>();

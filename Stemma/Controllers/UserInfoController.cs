@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Stemma.Middlewares;
 using Stemma.Models;
 using Stemma.Models.Github;
+using Stemma.Redis;
 using System.Text.Json;
 
 namespace Stemma.Controllers
@@ -12,11 +14,12 @@ namespace Stemma.Controllers
     [ApiController]
     public class UserInfoController : ControllerBase
     {
-        private readonly IMemoryCache _cache;
+        //private readonly IMemoryCache _cache;
+        private readonly IRedisService _redisService;
 
-        public UserInfoController(IMemoryCache cache)
+        public UserInfoController(IRedisService redisService)
         {
-            _cache = cache;
+            _redisService = redisService;
         }
 
         [HttpGet("profile")]
@@ -194,19 +197,32 @@ namespace Stemma.Controllers
 
                 var sortTotalLanguage = totalLanguages
                     .OrderByDescending(kvp => kvp.Value)
-                    .ToList();
+                    .ToDictionary();
 
-                _cache.Set($"{GitHubUserName}-Languages", sortTotalLanguage, TimeSpan.FromMinutes(10));
+                if(await _redisService.SetLangForUserAsync(GitHubUserName, sortTotalLanguage) == 1)
+                {
+                    Console.WriteLine("Successfully stored language data in Redis.");
+                } else
+                {
+                    Console.WriteLine("Failed to store language data in Redis.");
+                }
 
-                //foreach (var dicObject in sortTotalLanguage)
-                //{
-                //    Console.WriteLine($"{dicObject.Key}: {dicObject.Value}");
-                //}
-                //Console.WriteLine("--------------------\n");
+                    //_cache.Set($"{GitHubUserName}-Languages", sortTotalLanguage, TimeSpan.FromMinutes(10));
+                    //string serializedLanguages = JsonSerializer.Serialize(sortTotalLanguage);
+                    //await _cache.SetStringAsync($"{GitHubUserName}-Languages", serializedLanguages, new DistributedCacheEntryOptions
+                    //{
+                    //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                    //});
+
+                    //foreach (var dicObject in sortTotalLanguage)
+                    //{
+                    //    Console.WriteLine($"{dicObject.Key}: {dicObject.Value}");
+                    //}
+                    //Console.WriteLine("--------------------\n");
 
 
 
-                int total = 0;
+                    int total = 0;
                 foreach (var lang in sortTotalLanguage)
                 {
                     total += lang.Value;
@@ -278,14 +294,14 @@ namespace Stemma.Controllers
         }
 
         [HttpGet("sortedlanguages")]
-        public IActionResult GetSortedLanguages([FromQuery] string GitHubUserName)
+        public async Task<IActionResult> GetSortedLanguages([FromQuery] string GitHubUserName)
         {
-            if (_cache.TryGetValue($"{GitHubUserName}-Languages", out object? value) && value is List<KeyValuePair<string, int>> sortedLanguages)
+            List<KeyValuePair<string, int>>? serializedLanguages = await _redisService.GetLangFromUserAsync(GitHubUserName);
+            if (serializedLanguages.Count > 0)
             {
-                _cache.Remove($"{GitHubUserName}-Languages");
-                return Ok(sortedLanguages);
+                return Ok(serializedLanguages);
             }
-            return NotFound(new { Message = $"Unable to retrieve language list for user {GitHubUserName}. Either it has expired after 10 minutes or server failed to store it." });
+            return NotFound(new { Message = $"Unable to retrieve language list for user {GitHubUserName}. Either it has expired after 5 minutes or the server failed to retrieve it." });
         }
 
     }

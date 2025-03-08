@@ -3,6 +3,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using DotNetEnv;
 using Microsoft.OpenApi.Models;
+using Stemma.Redis;
+using Microsoft.Extensions.Hosting;
 Env.Load();
 // Environment.GetEnvironmentVariable("GOOGLE_PRIVATE_KEY")
 
@@ -59,8 +61,18 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddHttpClient();
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "";
+    var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "";
+    // If your Redis provider requires SSL, you might also need to add ",ssl=True" or other options.
+    options.Configuration = $"{redisHost},password={redisPassword}";
+    options.InstanceName = Environment.GetEnvironmentVariable("REDIS_INSTANCE_NAME") ?? "";
+});
+
+builder.Services.AddScoped<IRedisService, RedisService>();
+
 builder.Services.AddControllers();
-builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
 
 // builder.Services.AddSwaggerGen();

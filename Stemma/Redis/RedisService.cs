@@ -7,7 +7,6 @@ namespace Stemma.Redis
     public class RedisService : IRedisService
     {
         private readonly IDistributedCache _cache;
-        private readonly TimeSpan _cacheExpiry = TimeSpan.FromMinutes(5);
 
         public RedisService(IDistributedCache cache)
         {

@@ -65,7 +65,6 @@ builder.Services.AddStackExchangeRedisCache(options =>
 {
     var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "";
     var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "";
-    // If your Redis provider requires SSL, you might also need to add ",ssl=True" or other options.
     options.Configuration = $"{redisHost},password={redisPassword}";
     options.InstanceName = Environment.GetEnvironmentVariable("REDIS_INSTANCE_NAME") ?? "";
 });

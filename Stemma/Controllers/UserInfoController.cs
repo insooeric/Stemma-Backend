@@ -298,12 +298,18 @@ namespace Stemma.Controllers
         [HttpGet("sortedlanguages")]
         public async Task<IActionResult> GetSortedLanguages([FromQuery] string GitHubUserName)
         {
-            List<KeyValuePair<string, int>>? serializedLanguages = await _redisService.GetLangFromUserAsync(GitHubUserName);
-            if (serializedLanguages.Count > 0)
+            try
             {
-                return Ok(serializedLanguages);
+                List<KeyValuePair<string, int>>? serializedLanguages = await _redisService.GetLangFromUserAsync(GitHubUserName);
+                if (serializedLanguages.Count > 0)
+                {
+                    return Ok(serializedLanguages);
+                }
+                return NotFound(new { Message = $"Unable to retrieve language list for user {GitHubUserName}. Either it has expired after 5 minutes or the server failed to retrieve it." });
+            } catch (Exception ex)
+            {
+                return NotFound($"Something went wrong :( {ex.Message}");
             }
-            return NotFound(new { Message = $"Unable to retrieve language list for user {GitHubUserName}. Either it has expired after 5 minutes or the server failed to retrieve it." });
         }
 
     }

@@ -51,7 +51,7 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins(
                     "http://localhost:3000",
-                    "https://stemma.vercel.app/"
+                    "https://stemma.vercel.app"
                 )
                 .AllowCredentials()
                 .AllowAnyHeader()
@@ -112,9 +112,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowLocalhost");
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("AllowLocalhost");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

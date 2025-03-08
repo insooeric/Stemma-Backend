@@ -22,7 +22,7 @@ namespace Stemma.Redis
                     .OrderByDescending(kvp => kvp.Value)
                     .ToList();
                 string serializedLanguages = JsonConvert.SerializeObject(sortTotalLanguage);
-                Console.WriteLine(serializedLanguages);
+                // Console.WriteLine(serializedLanguages);
                 await _cache.SetStringAsync(key, serializedLanguages, new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)

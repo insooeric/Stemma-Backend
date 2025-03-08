@@ -199,13 +199,15 @@ namespace Stemma.Controllers
                     .OrderByDescending(kvp => kvp.Value)
                     .ToDictionary();
 
-                if(await _redisService.SetLangForUserAsync(GitHubUserName, sortTotalLanguage) == 1)
-                {
-                    Console.WriteLine("Successfully stored language data in Redis.");
-                } else
-                {
-                    Console.WriteLine("Failed to store language data in Redis.");
-                }
+                await _redisService.SetLangForUserAsync(GitHubUserName, sortTotalLanguage);
+
+                //if (await _redisService.SetLangForUserAsync(GitHubUserName, sortTotalLanguage) == 1)
+                //{
+                //    Console.WriteLine("Successfully stored language data in Redis.");
+                //} else
+                //{
+                //    Console.WriteLine("Failed to store language data in Redis.");
+                //}
 
                     //_cache.Set($"{GitHubUserName}-Languages", sortTotalLanguage, TimeSpan.FromMinutes(10));
                     //string serializedLanguages = JsonSerializer.Serialize(sortTotalLanguage);

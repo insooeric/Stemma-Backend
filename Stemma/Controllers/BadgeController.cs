@@ -580,16 +580,28 @@ namespace Stemma.Controllers
 
                         // ok... so we're gonna grab svg
                         item.imageInSvg = Encoding.UTF8.GetString(item.imageInByte);
+
+                        //Console.WriteLine("------------INITIAL SVG-----------");
+                        //Console.WriteLine(item.imageInSvg);
+                        //Console.WriteLine("----------------------------------");
                         // Console.WriteLine($"\nLoaded SVG:\n{item.imageInSvg}\n");
                         // the thing is svg might have different format. it might not contain rect, width etc...
                         // what if we parse svg to image then add svg container and image tag for it?
                         // the result svg should look the same as non-default svg
 
-                        string tmpSvg = new string(Encoding.UTF8.GetString(item.imageInByte));
+                        string tmpSvg = new string(item.imageInSvg);
                         tmpSvg = ImageHelper.FormatSvg(tmpSvg, item.imageName);
+                        //Console.WriteLine("------------FORMATTED SVG-----------");
+                        //Console.WriteLine(tmpSvg);
+                        //Console.WriteLine("----------------------------------");
+
                         int newHeight = 40;
                         int newWidth = ImageHelper.GetWidthByHeight(newHeight, tmpSvg);
                         item.imageInSvg = ImageHelper.ResizeSVG(tmpSvg, newWidth, newHeight);
+
+                        //Console.WriteLine("------------RESIZED SVG-----------");
+                        //Console.WriteLine(item.imageInSvg);
+                        //Console.WriteLine("----------------------------------");
 
                         //Console.WriteLine($"-------------\nOriginal default SVG:\n{tmpSvg}\n------------\n");
                         //string newTmpSvg = tmpSvg;

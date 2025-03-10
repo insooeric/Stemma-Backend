@@ -175,6 +175,7 @@ namespace Stemma.Middlewares
 
         public static string FormatSvg(string svgContent, string fileName)
         {
+           //  Console.WriteLine($"{fileName}");
             try
             {
                 string originalSvg = svgContent;
@@ -268,7 +269,7 @@ namespace Stemma.Middlewares
        viewBox=""{outerViewBox}"">
 {newDefs}
   <g clip-path=""url(#clip-{fileName})"">
-    {innerContent}
+    {originalSvg}
   </g>
 </svg>";
                 return resultSvg;

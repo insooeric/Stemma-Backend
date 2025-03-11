@@ -425,6 +425,55 @@ namespace Stemma.Controllers
             }
         }
 
+        [HttpGet("test-svg")]
+        public async Task<IActionResult> TestSvgAsync()
+        {
+            try
+            {
+                string testSvg = @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""300"" height=""285"" viewBox=""0 0 300 285"" fill=""none"" role=""img"" aria-labelledby=""descId"">
+  <title id=""descId"">Circular Image</title>
+  <defs>
+    <clipPath id=""circleClip"">
+      <circle cx=""150"" cy=""142.5"" r=""90"" />
+    </clipPath>
+    <!-- Adjusted gradient direction -->
+    <linearGradient id=""starlightGradient"" x1=""100%"" y1=""0%"" x2=""0%"" y2=""0%"">
+      <stop offset=""0%"" stop-color=""yellow"" stop-opacity=""0""/>
+      <stop offset=""50%"" stop-color=""yellow"" stop-opacity=""1""/>
+      <stop offset=""100%"" stop-color=""yellow"" stop-opacity=""1""/>
+    </linearGradient>
+    <!-- Define a group for the starlight -->
+    <g id=""starlight"">
+      <line x1=""0"" y1=""0"" x2=""-60"" y2=""30"" stroke=""url(#starlightGradient)"" stroke-width=""2"" stroke-linecap=""round""/>
+    </g>
+	
+	
+  </defs>
+  
+  <rect data-testid=""card-bg"" x=""0.5"" y=""0.5"" rx=""4.5"" width=""299"" height=""99%"" fill=""#242424"" stroke=""#e4e2e2"" stroke-opacity=""1""/>
+  
+  <!-- Use the starlight group with animate tags on x and y -->
+  <!-- Instance 1 -->
+<use href=""#starlight"" transform=""translate(300,0)"">
+  <animateTransform attributeName=""transform""
+                    type=""translate""
+                    values=""0 0; -100 50""
+                    keyTimes=""0; 1""
+                    additive=""sum""
+                    dur=""2s""
+                    repeatCount=""indefinite""/>
+</use>
+
+</svg>
+";
+                return Content(testSvg, "image/svg+xml");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"Something went wrong :( {ex.Message}" });
+            }
+        }
+
         [HttpGet("")]
         // example: https://localhost:32769/api/badge?user=insooeric&badge=auth
         public async Task<IActionResult> GetBadgeAsync([FromQuery] string? user, [FromQuery] string badge, [FromQuery] int? row, [FromQuery] int? col, [FromQuery] bool? fit)

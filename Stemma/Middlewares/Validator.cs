@@ -6,6 +6,7 @@ namespace Stemma.Middlewares
     public static class Validator
     {
         private static readonly string BucketName = "badge-bucket";
+        private const int MaxItems = 20;
 
         public static async Task<bool> CheckValidName(string name, string JsonGoogleCred)
         {
@@ -25,6 +26,33 @@ namespace Stemma.Middlewares
                 // count++;
             }
             return true;
+        }
+
+        public static async Task<bool> CheckMaximumItemsReached(string githubUserName, string JsonGoogleCred)
+        {
+            try
+            {
+                var credential = GoogleCredential.FromJson(JsonGoogleCred);
+                StorageClient storageClient = await StorageClient.CreateAsync(credential);
+
+                string prefix = $"{githubUserName}/";
+                var userBadgeObjects = storageClient.ListObjectsAsync(BucketName, prefix);
+                int count = 0;
+                await foreach (var obj in userBadgeObjects)
+                {
+                    if(obj != null)
+                    {
+                        count++;
+                    }
+                }
+
+                return (count >= MaxItems) ? true : false;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return true;
+            }
         }
     }
 }

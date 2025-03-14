@@ -53,6 +53,32 @@ namespace Stemma.Controllers
             }
         }
 
+        //[HttpPost("test-badge-limit")]
+        //public async Task<IActionResult> TestBadgeLimitAsync([FromBody] BadgeGetRequest request)
+        //{
+        //    try
+        //    {
+        //        if (request == null)
+        //        {
+        //            return BadRequest(new { Message = "Request body is missing." });
+        //        }
+        //        if (string.IsNullOrEmpty(request.UserId))
+        //        {
+        //            return BadRequest(new { Message = "User ID is required." });
+        //        }
+        //        if (string.IsNullOrEmpty(JsonGoogleCred))
+        //        {
+        //            return BadRequest(new { Message = "Server configuration error: Missing credentials." });
+        //        }
+        //        bool isMaxReached = await Validator.CheckMaximumItemsReached(request.UserId, JsonGoogleCred);
+        //        return Ok(new { Message = "Badge limit test successful.", IsMaxReached = isMaxReached });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { Message = $"Unexpected error: {ex.Message}" });
+        //    }
+        //}
+
         [HttpPost("upload-badge")]
         [Authorize] // MAKE SURE TO UNCOMMENT THIS 
         public async Task<IActionResult> UploadBadgeAsync([FromForm] BadgeUploadRequest request)
@@ -103,6 +129,11 @@ namespace Stemma.Controllers
                 if (!await Validator.CheckValidName(Path.GetFileNameWithoutExtension(fileName), JsonGoogleCred))
                 {
                     return BadRequest(new { Message = "One of the default badges has the following name. Please choose another name." });
+                }
+
+                if(await Validator.CheckMaximumItemsReached(request.UserId, JsonGoogleCred))
+                {
+                    return BadRequest(new { Message = "Maximum number of items reached. Please delete badge to add new one" });
                 }
 
                 await foreach (var obj in objects)

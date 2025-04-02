@@ -59,14 +59,67 @@ namespace Stemma.Controllers
         <title>Login Successful</title>
         <meta http-equiv=""refresh"" content=""2;url={redirectUrl}"" />
       </head>
-      <body>
-        <p>Login successful. Redirecting...</p>
+<body>
+    <div class=""main-content"">
+        <span class=""title"">Welcome to</span>
+        <div class=""logo-container"">
+            <svg xmlns=""http://www.w3.org/2000/svg"" width=""330"" height=""100"" viewBox=""0 0 330 100"">
+                <defs>
+                    <linearGradient id=""grad1"" x1=""0%"" y1=""0%"" x2=""100%"" y2=""0%"">
+                        <stop offset=""0%"" style=""stop-color:#3498db;stop-opacity:1"" />
+                        <stop offset=""100%"" style=""stop-color:#9b59b6;stop-opacity:1"" />
+                    </linearGradient>
+                </defs>
+                <text x=""50%"" y=""50%"" text-anchor=""middle"" dominant-baseline=""middle"" font-family=""Arial, sans-serif""
+                    font-size=""80"" fill=""url(#grad1)"" stroke=""url(#grad1)"" stroke-width=""6"" stroke-linecap=""round""
+                    stroke-linejoin=""round"" letter-spacing=""5"" transform=""translate(0,0)"">
+                    Stemma
+                </text>
+            </svg>
+        </div>
+
+
+        <span class=""description"">
+            <p>Login Successful!</p>
+            <p>Redirecting to Home...</p>
+        </span>
+    </div>
+    <style>
+        body {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #242424;
+            color: white;
+        }}
+
+        .main-content {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            box-sizing: border-box;
+        }}
+
+        .title {{
+            font-size: 2rem;
+            font-weight: bold;
+        }}
+
+        .description {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 1.5rem;
+        }}
+    </style>
         <script type=""text/javascript"">
           setTimeout(function() {{
             window.location.href = '{redirectUrl}';
           }}, 2000);
         </script>
-      </body>
+
+</body>
     </html>";
 
             return Content(htmlContent, "text/html");

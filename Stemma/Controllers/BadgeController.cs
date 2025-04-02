@@ -456,58 +456,58 @@ namespace Stemma.Controllers
             }
         }
 
-        [HttpGet("test-svg")]
-        public async Task<IActionResult> TestSvgAsync()
-        {
-            try
-            {
-                string testSvg = @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""300"" height=""285"" viewBox=""0 0 300 285"" fill=""none"" role=""img"" aria-labelledby=""descId"">
-  <title id=""descId"">Circular Image</title>
-  <defs>
-    <clipPath id=""circleClip"">
-      <circle cx=""150"" cy=""142.5"" r=""90"" />
-    </clipPath>
-    <!-- Adjusted gradient direction -->
-    <linearGradient id=""starlightGradient"" x1=""100%"" y1=""0%"" x2=""0%"" y2=""0%"">
-      <stop offset=""0%"" stop-color=""yellow"" stop-opacity=""0""/>
-      <stop offset=""50%"" stop-color=""yellow"" stop-opacity=""1""/>
-      <stop offset=""100%"" stop-color=""yellow"" stop-opacity=""1""/>
-    </linearGradient>
-    <!-- Define a group for the starlight -->
-    <g id=""starlight"">
-      <line x1=""0"" y1=""0"" x2=""-60"" y2=""30"" stroke=""url(#starlightGradient)"" stroke-width=""2"" stroke-linecap=""round""/>
-    </g>
+//        [HttpGet("test-svg")]
+//        public async Task<IActionResult> TestSvgAsync()
+//        {
+//            try
+//            {
+//                string testSvg = @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""300"" height=""285"" viewBox=""0 0 300 285"" fill=""none"" role=""img"" aria-labelledby=""descId"">
+//  <title id=""descId"">Circular Image</title>
+//  <defs>
+//    <clipPath id=""circleClip"">
+//      <circle cx=""150"" cy=""142.5"" r=""90"" />
+//    </clipPath>
+//    <!-- Adjusted gradient direction -->
+//    <linearGradient id=""starlightGradient"" x1=""100%"" y1=""0%"" x2=""0%"" y2=""0%"">
+//      <stop offset=""0%"" stop-color=""yellow"" stop-opacity=""0""/>
+//      <stop offset=""50%"" stop-color=""yellow"" stop-opacity=""1""/>
+//      <stop offset=""100%"" stop-color=""yellow"" stop-opacity=""1""/>
+//    </linearGradient>
+//    <!-- Define a group for the starlight -->
+//    <g id=""starlight"">
+//      <line x1=""0"" y1=""0"" x2=""-60"" y2=""30"" stroke=""url(#starlightGradient)"" stroke-width=""2"" stroke-linecap=""round""/>
+//    </g>
 	
 	
-  </defs>
+//  </defs>
   
-  <rect data-testid=""card-bg"" x=""0.5"" y=""0.5"" rx=""4.5"" width=""299"" height=""99%"" fill=""#242424"" stroke=""#e4e2e2"" stroke-opacity=""1""/>
+//  <rect data-testid=""card-bg"" x=""0.5"" y=""0.5"" rx=""4.5"" width=""299"" height=""99%"" fill=""#242424"" stroke=""#e4e2e2"" stroke-opacity=""1""/>
   
-  <!-- Use the starlight group with animate tags on x and y -->
-  <!-- Instance 1 -->
-<use href=""#starlight"" transform=""translate(300,0)"">
-  <animateTransform attributeName=""transform""
-                    type=""translate""
-                    values=""0 0; -100 50""
-                    keyTimes=""0; 1""
-                    additive=""sum""
-                    dur=""2s""
-                    repeatCount=""indefinite""/>
-</use>
+//  <!-- Use the starlight group with animate tags on x and y -->
+//  <!-- Instance 1 -->
+//<use href=""#starlight"" transform=""translate(300,0)"">
+//  <animateTransform attributeName=""transform""
+//                    type=""translate""
+//                    values=""0 0; -100 50""
+//                    keyTimes=""0; 1""
+//                    additive=""sum""
+//                    dur=""2s""
+//                    repeatCount=""indefinite""/>
+//</use>
 
-</svg>
-";
-                return Content(testSvg, "image/svg+xml");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = $"Something went wrong :( {ex.Message}" });
-            }
-        }
+//</svg>
+//";
+//                return Content(testSvg, "image/svg+xml");
+//            }
+//            catch (Exception ex)
+//            {
+//                return StatusCode(500, new { Message = $"Something went wrong :( {ex.Message}" });
+//            }
+//        }
 
         [HttpGet("")]
         // example: https://localhost:32769/api/badge?user=insooeric&badge=auth
-        public async Task<IActionResult> GetBadgeAsync([FromQuery] string? user, [FromQuery] string badge, [FromQuery] int? row, [FromQuery] int? col, [FromQuery] bool? fit)
+        public async Task<IActionResult> GetBadgeAsync([FromQuery] string? user, [FromQuery] string badge, [FromQuery] string? row, [FromQuery] string? col, [FromQuery] string? fit, [FromQuery] string? align, [FromQuery] int? gap, [FromQuery] int? emptyWidth, [FromQuery] int? emptyHeight)
         {
             Env.Load();
             //bool offline_debug = (Environment.GetEnvironmentVariable("OFFLINE_MODE") ?? "").ToLower().Equals("true") ? true : false;
@@ -518,14 +518,17 @@ namespace Stemma.Controllers
             {
 
                 string userFolderName = string.IsNullOrEmpty(user) ? "-default" : user;
-                int definedRow = row ?? 0;
-                int definedCol = col ?? 0;
-                bool defineFitContent = fit ?? false;
+                //int definedRow;
+                //int definedCol;
+                string defineFitContent;
+                int defineGap;
+                string alignType;
+                int defineEmptyWidth = emptyWidth ?? 40;
+                int defineEmptyHeight = emptyHeight ?? 40;
 
-                if (definedRow < 0 || definedCol < 0)
-                {
-                    return BadRequest(new { Message = "Either row or column cannot be less than 1" });
-                }
+
+                //List<int> templateCol;
+                //List<int> templateRow;
 
 
                 if (string.IsNullOrEmpty(badge))
@@ -702,34 +705,58 @@ namespace Stemma.Controllers
                         item.imageExtension = ext;
                     }
                 }
-                // }
 
-
-
-                /*                Console.WriteLine("---------------------------------------------");
-                                Console.WriteLine("List of Images");
-                                foreach (var image in imageList)
-                                {
-                                    Console.WriteLine(image.imageInSvg);
-                                    Console.WriteLine();
-                                }
-                                Console.WriteLine("---------------------------------------------");*/
-
-
-                /*                foreach (var item in imageList)
-                                {
-                                    Console.WriteLine($"----------------------");
-                                    Console.WriteLine($"Object exists? {(item.imageObject != null ? "Yes" : "No")}");
-                                    Console.WriteLine($"Image byte exists?: {(item.imageInByte != null ? "Yes" : "No")}");
-                                    Console.WriteLine($"Image svg exists?: {(item.imageInSvg != null ? "Yes" : "No")}");
-                                    Console.WriteLine($"Image folder: {item.folderName}");
-                                    Console.WriteLine($"Image name: {item.imageName}");
-                                    Console.WriteLine($"Image type: {item.imageExtension}\n");
-                                }*/
-
+                int[,] grid = GridHelper.GetGrid(imageList.Count, row, col);
 
 
                 string svgContent = "";
+
+
+                if(fit == null)
+                {
+                    defineFitContent = "none";
+                } else
+                {
+                    defineFitContent = fit.ToLower();
+                    if (defineFitContent != "none" && defineFitContent != "row") // && defineFitContent != "col" )//&& defineFitContent != "all")
+                    {
+                        return BadRequest(new { Message = "Invalid fit type. Must be either none, row" });
+                    }
+                }
+
+                defineGap = gap ?? 5;
+                if(defineGap < 0 || defineGap > 10)
+                {
+                    return BadRequest(new { Message = "Invalid gap value. Must be greater than -1, smaller than 11" });
+                }
+
+
+                if (align == null)
+                {
+                    alignType = "topleft";
+                }
+                else
+                {
+                    alignType = align.ToLower();
+                    if (
+                        alignType != "topleft" && 
+                        alignType != "top" && 
+                        alignType != "topright" &&
+                        alignType != "left" &&
+                        alignType != "center" &&
+                        alignType != "right" &&
+                        alignType != "bottomleft" &&
+                        alignType != "bottom" &&
+                        alignType != "bottomright"
+                        )
+                    {
+                        return BadRequest(new { Message = "Invalid align type. Must be either left, center, or right" });
+                    }
+                }
+
+
+
+                //return BadRequest(new { Message = $"degugging..." });
 
                 if (imageList.Count == 1)
                 {
@@ -753,26 +780,35 @@ namespace Stemma.Controllers
                                             Console.WriteLine();
                                         }*/
                     // TODO: THIS IS A ROUGH VERSION. NEED TO ADD ENHANCED LOGIC
-                    // do it in MultipleSVGCreator.Create()
-                    if (definedRow > imageList.Count || definedCol > imageList.Count)
-                    {
-                        return BadRequest(new { Message = $"Error: both Row and Column cannot exceed number of badges" });
-                    }
+                    //// do it in MultipleSVGCreator.Create()
+                    //if (definedRow > imageList.Count || definedCol > imageList.Count)
+                    //{
+                    //    return BadRequest(new { Message = $"Error: both Row and Column cannot exceed number of badges" });
+                    //}
+                    //try
+                    //{
+                    //    svgContent = MultipleSVGCreator.Create(imageList, definedRow, definedCol, defineFitContent);
+                    //}
+                    //catch (ArgumentException ex)
+                    //{
+                    //    return BadRequest(new { Message = $"Error: {ex.Message}" });
+                    //}
                     try
                     {
-                        svgContent = MultipleSVGCreator.Create(imageList, definedRow, definedCol, defineFitContent);
+                        svgContent = MultipleSVGCreator.Create(imageList, grid, defineFitContent, alignType, defineGap, defineEmptyWidth, defineEmptyHeight);
                     }
                     catch (ArgumentException ex)
                     {
                         return BadRequest(new { Message = $"Error: {ex.Message}" });
                     }
+                    //svgContent = "";
                 }
 
                 return Content(svgContent, "image/svg+xml");
             }
             catch (Exception ex)
             {
-                return BadRequest(new { Message = $"Error while grabbing badge {ex.Message}" });
+                return BadRequest(new { Message = $"Error while grabbing badge: {ex.Message}" });
             }
         }
     }

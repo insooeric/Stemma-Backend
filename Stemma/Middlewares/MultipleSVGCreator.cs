@@ -1,157 +1,175 @@
-﻿using Stemma.Models;
+﻿using Stemma.Middlewares.SvgCreator;
+using Stemma.Models;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Stemma.Middlewares
 {
     public static class MultipleSVGCreator
     {
-        public static string Create(List<ImageObject> imageObjects, int row, int col, bool fitContent)
+
+        public static string Create(List<ImageObject> imageObjects, int[,] grid, string fitContent, string alignType, int _gap, int emptyCellWidth, int emptyCellHeight)
         {
-            const double targetHeight = 40;
-            const double gap = 5;
+            //Console.WriteLine("---------------------");
+            //Console.WriteLine("Creating multiple SVGs");
+            //Console.WriteLine($"Num of images: {imageObjects.Count}");
+            //Console.WriteLine($"Grid: {grid.GetLength(0)}x{grid.GetLength(1)}");
+            //Console.WriteLine($"Fit content: {fitContent}");
+            //Console.WriteLine($"Align: {alignType}");
+            //Console.WriteLine("---------------------");
+            // !!!GRID IS ALWAYS VALID!!!
+            // !!!GRID IS ALWAYS VALID!!!
+            // !!!GRID IS ALWAYS VALID!!!
+            // !!!GRID IS ALWAYS VALID!!!
 
-            List<(string svg, double width)> badgeSvgs = new List<(string svg, double width)>();
+            // const double targetHeight = 40;
+            int gap = _gap;
 
 
-            //Console.WriteLine($"Constrain width and height: {fitContent}");
+            int numOfRow = grid.GetLength(0);
+            int numOfCol = grid.GetLength(1);
 
+
+            List<(string svg, double width, double height)> badgeSvgs = new List<(string svg, double width, double height)>();
             foreach (var image in imageObjects)
             {
-                // Console.WriteLine("yeet");
-                //string badgeSvg = Encoding.UTF8.GetString(image.imageInByte); 
-                //= SingleSVGCreator.Create(image.folderName, image.imageInByte, image.imageExtension);
-
-                // WARNING: INITIAL HEIGHT OF SVG IS ALWAYS 100
-
                 string badgeSvg = new string(image.imageInSvg);
                 int newHeight = 40;
                 int newWidth = newHeight; // fallback
-                if (!fitContent)
-                {
+                //if (!fitContent)
+                //{
                     newWidth = ImageHelper.GetWidthByHeight(newHeight, badgeSvg);
-                }
-                //int badgeWidth = ImageHelper.GetWidthByHeight(40, badgeSvg);
+                // }
                 badgeSvg = ImageHelper.ResizeSVG(badgeSvg, newWidth, newHeight);
-                badgeSvgs.Add((badgeSvg, newWidth));
+                badgeSvgs.Add((badgeSvg, newWidth, newHeight));
             }
 
-            /*            foreach (var badgeSvg in badgeSvgs)
-                        {
-                            Console.WriteLine(badgeSvg.svg);
-                        }*/
 
-            // ENHANCED LOGIC
-            // NOTE that ALWAYS row & col <= badgeSvgs.Count
 
-            // 1. if both are 0, meaning undefined, we're gonna automatically display flow
-            if (row == 0 && col == 0)
+
+            for (int r = 0; r < numOfRow; r++)
             {
-                row = 1;
-                col = badgeSvgs.Count;
-            }
-            // 2. if row > 0 and col is 0, we're gonna adjust col
-            else if (row > 0 && col == 0)
-            {
-                col = badgeSvgs.Count / row;
-                if (badgeSvgs.Count % row > 0)
+                bool isEmptyRow = true;
+                for (int c = 0; c < numOfCol; c++)
                 {
-                    col++;
-                }
-            }
-            // 3. if col > 0 and row is 0, we're gonna adjust row
-            else if (col > 0 && row == 0)
-            {
-                row = badgeSvgs.Count / col;
-                if (badgeSvgs.Count % col > 0)
-                {
-                    row++;
-                }
-            }
-
-            // check under-sized grid
-            if (row * col < badgeSvgs.Count)
-            {
-                throw new ArgumentException(
-                    $"Invalid grid dimensions: Number of items exceeds the number of cell of the grid."
-                );
-            }
-            // check oversized grid
-            //Console.WriteLine(requiredRows);
-
-
-            // check valid cols
-            int requiredRows = (int)Math.Ceiling(badgeSvgs.Count / (double)col);
-            if (row != requiredRows)
-            {
-                throw new ArgumentException(
-                    $"Invalid grid dimensions: Exactly {requiredRows} rows are needed for {badgeSvgs.Count} items."
-                );
-            }
-
-            //Console.WriteLine($"Row: {row} Column: {col}");
-
-            //***********************************************
-            // in this point, row and column are always valid.
-            //***********************************************
-
-            // TODO: CHECK LOGICAL SPECIFICATIONS HERE
-            // TODO: CHECK LOGICAL SPECIFICATIONS HERE
-            // TODO: CHECK LOGICAL SPECIFICATIONS HERE
-            // TODO: CHECK LOGICAL SPECIFICATIONS HERE
-
-            double overallWidth = 0;
-            double[] rowWidths = new double[row];
-            for (int i = 0; i < row; i++)
-            {
-                double rowWidth = 0;
-                int itemsInRow = 0;
-                for (int j = 0; j < col; j++)
-                {
-                    int index = i * col + j;
-                    if (index < badgeSvgs.Count)
+                    if (grid[r, c] != 0)
                     {
-                        rowWidth += badgeSvgs[index].width;
-                        itemsInRow++;
-                        if (j < col - 1 && index < badgeSvgs.Count - 1)
-                        {
-                            rowWidth += gap;
-                        }
+                        isEmptyRow = false;
+                        break;            
                     }
                 }
-                rowWidths[i] = rowWidth;
-                overallWidth = Math.Max(overallWidth, rowWidth);
-            }
 
-            double overallHeight = row * targetHeight + (row - 1) * gap;
-
-            StringBuilder svgBuilder = new StringBuilder();
-            svgBuilder.AppendLine(
-                $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{overallWidth}\" height=\"{overallHeight}\" viewBox=\"0 0 {overallWidth} {overallHeight}\">");
-
-            for (int i = 0; i < row; i++)
-            {
-                double xOffset = 0;
-                double yOffset = i * (targetHeight + gap);
-                for (int j = 0; j < col; j++)
+                if (isEmptyRow)
                 {
-                    int index = i * col + j;
-                    if (index >= badgeSvgs.Count)
+                    for (int c = 0; c < numOfCol; c++)
                     {
-                        continue;
-                    }
-                    var badge = badgeSvgs[index];
-                    string positionedBadgeSvg = ImageHelper.UpdatePosition(badge.svg, xOffset, yOffset);
-                    svgBuilder.AppendLine(positionedBadgeSvg);
-                    xOffset += badge.width;
-                    if (j < col - 1 && index < badgeSvgs.Count - 1)
-                    {
-                        xOffset += gap;
+                        grid[r, c] = -1;
                     }
                 }
             }
 
-            svgBuilder.AppendLine("</svg>");
-            return svgBuilder.ToString();
+
+            for (int c = 0; c < numOfCol; c++)
+            {
+                bool isEmptyCol = true;  
+                for (int r = 0; r < numOfRow; r++)
+                {
+                    if (grid[r, c] != 0 && grid[r, c] != -1)
+                    {
+                        isEmptyCol = false; 
+                        break;        
+                    }
+                }
+
+                if (isEmptyCol)
+                {
+                    for (int r = 0; r < numOfRow; r++)
+                    {
+                        grid[r, c] = -1; 
+                    }
+                }
+            }
+
+
+
+
+            //Console.WriteLine("Grid:");
+            //for (int i = 0; i < numOfRow; i++)
+            //{
+            //    for (int j = 0; j < numOfCol; j++)
+            //    {
+            //        if (grid[i, j] != 0)
+            //            Console.Write(grid[i, j] + "\t");
+            //        else
+            //            Console.Write("0\t");
+            //    }
+            //    Console.WriteLine();
+            //}
+
+            //Console.WriteLine("------end------");
+
+            double gridWidth = 0;
+            double gridHeight = 0;
+
+            // List<Cell> cells = new List<Cell>();
+            Dictionary<(int row, int col), Cell> cellDictionary = new Dictionary<(int, int), Cell>();
+            int idval = 1;
+
+            for (int r = 0; r < numOfRow; r++)
+            {
+                for (int c = 0; c < numOfCol; c++)
+                {
+                    if (grid[r, c] > 0)
+                    {
+                        var tmpSvg = badgeSvgs[grid[r, c] - 1];
+                        cellDictionary[(r, c)] = new Cell(idval, tmpSvg.svg, tmpSvg.width, tmpSvg.height, 0, 0, false, false, 0, 0, r, c);
+                    }
+                    else if(grid[r, c] == 0)
+                    {
+                        // cells.Add(new Cell("", 0, 0, 0, 0, true, false, 0, 0, r, c));
+                        cellDictionary[(r, c)] = new Cell(0, "", 0, 0, 0, 0, true, false, 0, 0, r, c);
+                    }
+                    else if( grid[r, c] == -1)
+                    {
+                        //cells.Add(new Cell("", emptyCellWidth, emptyCellHeight, 0, 0, false, true, 0, 0, r, c));
+                        cellDictionary[(r, c)] = new Cell(-1, "", emptyCellWidth, emptyCellHeight, 0, 0, false, true, 0, 0, r, c);
+                    }
+                    else
+                    {
+                        throw new Exception("this shouldn't happen :(");
+                    }
+                    idval++;
+                }
+            }
+
+            // WE NEED TO REDEFINE POSITION X, Y, GAPS
+
+            //string innerSvg = "";
+
+            Dictionary < (int row, int col), Cell > resultCellDic = new Dictionary<(int row, int col), Cell>();
+            switch (fitContent)
+            {
+                case "none":
+                    resultCellDic = NoneFitSvg.Create(grid, cellDictionary, alignType, gap);
+                    break;
+                case "row":
+                    resultCellDic = RowFitSvg.Create(grid, cellDictionary, alignType, gap);
+                    break;
+                case "col":
+                    // TODO: yeah... work with this
+                    // resultCellDic = ColFitSvg.Create(grid, cellDictionary, alignType, gap);
+                    break;
+
+                // ahh... nah... let's think about this later...
+                //case "all":
+                //    break;
+                default:
+                    throw new Exception("this error shouldn't happen...");
+            }
+
+
+            return DrawSvg.Draw(resultCellDic, grid, gap);
         }
     }
 }

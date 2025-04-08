@@ -50,7 +50,7 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    "http://localhost:3000",
+                    "http://localhost:3000", // so, this is defect here. make sure to remove before deploy.
                     "https://stemma.vercel.app"
                 )
                 .AllowCredentials()

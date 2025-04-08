@@ -1,84 +1,13 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Stemma.Models;
+﻿using Stemma.Models;
 
 namespace Stemma.Middlewares.SvgCreator
 {
+    // IDEA? 
+    // what if we just read json that contains the cell data?
+    // that'd be easier instead of dealing with these whole shit.
+    // yeah, let's do that
     public static class RowFitSvg
     {
-        public enum CellGroupType
-        {
-            Image,
-            Default,
-            Empty
-        }
-
-        public static CellGroupType GetCellGroupType(Cell cell)
-        {
-            if (!cell.isEmptyCell && !cell.isDefaultCell)
-                return CellGroupType.Image;
-            else if (cell.isDefaultCell)
-                return CellGroupType.Default;
-            else
-                return CellGroupType.Empty;
-        }
-
-        // RULE34: merge if same type, or if current group is Image and next cell is Empty.
-        public static bool ShouldMerge(CellGroupType current, CellGroupType next)
-        {
-            if (current == CellGroupType.Image && next == CellGroupType.Empty)
-                return true;
-            return current == next;
-        }
-
-        // custom segmentation for rows that are entirely default.
-        // example) if there are 7 cells
-        // we wanna group it like:
-        // group1: col0; group2: col1-2; group3: col3-4; group4: col5; group5: col6.
-        public static List<List<Cell>> Grouping(int row, int numOfCol, Dictionary<(int, int), Cell> cellDic)
-        {
-            List<List<Cell>> segments = new List<List<Cell>>();
-            if (numOfCol == 0)
-                return segments;
-            if (numOfCol == 1)
-            {
-                segments.Add(new List<Cell>() { cellDic[(row, 0)] });
-                return segments;
-            }
-
-            // ok. let's start.
-            // we always treat the first and last default cells as separate groups.
-            List<Cell> leftGroup = new List<Cell>() { cellDic[(row, 0)] };
-            List<Cell> rightGroup = new List<Cell>() { cellDic[(row, numOfCol - 1)] };
-
-            segments.Add(leftGroup);
-
-            List<List<Cell>> midGroups = new List<List<Cell>>();
-            int index = 1;
-            int countMid = numOfCol - 2; // number of cells in the middle
-            while (index < numOfCol - 1)
-            {
-                // if at least 2 cells remain, pair them;
-                if (index + 1 < numOfCol - 1)
-                {
-                    midGroups.Add(new List<Cell>() { cellDic[(row, index)], cellDic[(row, index + 1)] });
-                    index += 2;
-                }
-                else // otherwise, group the single leftover.
-                {
-                    midGroups.Add(new List<Cell>() { cellDic[(row, index)] });
-                    index++;
-                }
-            }
-
-            // adding mid groups...
-            segments.AddRange(midGroups);
-            // adding end group
-            segments.Add(rightGroup);
-
-            return segments;
-        }
-
-
         public static Dictionary<(int row, int col), Cell> Create(
             int[,] grid,
             Dictionary<(int row, int col), Cell> cellDic,
@@ -92,11 +21,11 @@ namespace Stemma.Middlewares.SvgCreator
             // OK, WE ARE KEEPING IN TRACK OF EMPTY, DEFAULT, AND ACTUAL IMAGE.
             // the thing is, default always exists when entire row is default.
             // we gotta group them up.
+            // TODO: REMOVE MAGIC NUMBERS
 
-            List<List<List<Cell>>> rowList = new List<List<List<Cell>>>();
+            var rowList = new List<List<List<Cell>>>();
             for (int r = 0; r < numOfRow; r++)
             {
-                // check if the entire row is default.
                 bool isAllDefault = true;
                 for (int c = 0; c < numOfCol; c++)
                 {
@@ -107,289 +36,268 @@ namespace Stemma.Middlewares.SvgCreator
                     }
                 }
                 if (isAllDefault)
-                {
                     rowList.Add(Grouping(r, numOfCol, cellDic));
-                    continue;
-                }
-
-                List<List<Cell>> segmentList = new List<List<Cell>>();
-                List<Cell> currentGroup = new List<Cell>();
-                CellGroupType? currentGroupType = null;
-                for (int c = 0; c < numOfCol; c++)
+                else
                 {
-                    Cell cellObj = cellDic[(r, c)];
-                    CellGroupType cellType = GetCellGroupType(cellObj);
-
-                    if (currentGroupType == null)
-                        currentGroupType = cellType;
-
-                    if (cellType == currentGroupType)
-                        currentGroup.Add(cellObj);
-                    else
+                    var segList = new List<List<Cell>>();
+                    var currentGroup = new List<Cell>();
+                    CellGroupType? currType = null;
+                    for (int c = 0; c < numOfCol; c++)
                     {
-                        segmentList.Add(currentGroup);
-                        currentGroup = new List<Cell>() { cellObj };
-                        currentGroupType = cellType;
-                    }
-                }
-                if (currentGroup.Count > 0)
-                    segmentList.Add(currentGroup);
-                rowList.Add(segmentList);
-            }
-
-            //int debug_counter = 0;
-            //foreach (List<List<Cell>> cellList in rowList)
-            //{
-            //    Console.WriteLine($"Row #{debug_counter}: ");
-            //    Console.Write("\t");
-            //    foreach (List<Cell> cellGroup in cellList)
-            //    {
-            //        Console.Write("(");
-            //        foreach(Cell cell in cellGroup)
-            //        {
-            //            Console.Write($"{cell.imageWidth}x{cell.imageHeight} ");
-            //        }
-            //        Console.Write(")");
-            //    }
-            //    Console.WriteLine();
-            //    debug_counter++;
-            //}
-
-
-            int numOfSagementInRow = 0;
-            List<double> sagementWidthList = new List<double>();
-            List<List<double>> rowWidthList = new List<List<double>>();
-            foreach (List<List<Cell>> sagementList in rowList)
-            {
-                int segCountInThisRow = 0;
-                foreach (List<Cell> imageGroup in sagementList)
-                {
-                    double totalWidth = 0;
-                    foreach (Cell cellObj in imageGroup)
-                    {
-                        totalWidth += cellObj.imageWidth;
-                        totalWidth += gap;
-                    }
-                    if (totalWidth > 0)
-                    {
-                        totalWidth -= gap; // remove trailing gap
-                    }
-                    segCountInThisRow++;
-                    sagementWidthList.Add(totalWidth);
-                }
-                rowWidthList.Add(sagementWidthList);
-                sagementWidthList = new List<double>();
-                if (numOfSagementInRow < segCountInThisRow)
-                {
-                    numOfSagementInRow = segCountInThisRow;
-                }
-            }
-
-            //foreach(List<double> a in rowWidthList)
-            //{
-            //    foreach (double b in a)
-            //    {
-            //        Console.WriteLine(b);
-            //    }
-            //    Console.WriteLine();
-            //}
-            // ok. we have something here...
-
-            // for each segment index, take the maximum width across rows.
-            List<double> cellWidthList = new List<double>();
-            for (int i = 0; i < numOfSagementInRow; i++)
-            {
-                cellWidthList.Add(0);
-            }
-            foreach (List<double> widthList in rowWidthList)
-            {
-                int rowIndex = 0;
-                foreach (double width in widthList)
-                {
-                    if (cellWidthList[rowIndex] < width)
-                    {
-                        cellWidthList[rowIndex] = width;
-                    }
-                    rowIndex++;
-                }
-            }
-
-            //Console.WriteLine("\nCell Width across row");
-            //foreach(double cellWidth in cellWidthList)
-            //{
-            //    Console.WriteLine(cellWidth);
-            //}
-            //Console.WriteLine();
-            // data is accurate here.
-
-            for(int r = 0; r < numOfRow; r++)
-            {
-                for (int c = 0; c < numOfCol; c++)
-                {
-                    Cell cell = cellDic[(r,c)];
-                }
-            }
-
-            // compute row heights (from image cells only, default cells are fixed)
-            List<double> rowHeightList = new List<double>();
-            for (int r = 0; r < numOfRow; r++)
-            {
-                double maxHeight = 0;
-                for (int c = 0; c < numOfCol; c++)
-                {
-                    Cell cellObj = cellDic[(r, c)];
-                    if (!cellObj.isEmptyCell && !cellObj.isDefaultCell)
-                    {
-                        if (maxHeight < cellObj.imageHeight)
+                        var cell = cellDic[(r, c)];
+                        var type = GetCellGroupType(cell);
+                        if (currType == null)
+                            currType = type;
+                        if (currType.HasValue && ShouldMerge(currType.Value, type))
+                            currentGroup.Add(cell);
+                        else
                         {
-                            maxHeight = cellObj.imageHeight;
+                            segList.Add(currentGroup);
+                            currentGroup = new List<Cell>() { cell };
+                            currType = type;
                         }
                     }
-                    else if (cellObj.isDefaultCell)
+                    if (currentGroup.Count > 0)
+                        segList.Add(currentGroup);
+                    rowList.Add(segList);
+                }
+            }
+
+            // ------------------DEBUG LOG-------------------
+            //for (int r = 0; r < rowList.Count; r++)
+            //{
+            //    Console.Write($"Row #{r}: ");
+            //    foreach (var group in rowList[r])
+            //    {
+            //        Console.Write("(");
+            //        foreach (var cell in group)
+            //            Console.Write($"{cell.imageWidth}x{cell.imageHeight} ");
+            //        Console.Write(") ");
+            //    }
+            //    Console.WriteLine();
+            //}
+            // yeah, that works
+
+            // calc cellWidthList for non-default rows
+            int maxNumGroups = 0;
+            var nonDefWidths = new List<List<double>>();
+            for (int r = 0; r < rowList.Count; r++)
+            {
+                bool defRow = true;
+                foreach (var group in rowList[r])
+                {
+                    if (group.Count == 0 || !group[0].isDefaultCell)
                     {
-                        maxHeight = Math.Max(maxHeight, cellObj.imageHeight); // defaul
+                        defRow = false;
+                        break;
                     }
                 }
-                rowHeightList.Add(maxHeight);
+                if (defRow) continue;
+                var grpWidths = new List<double>();
+                foreach (var group in rowList[r])
+                {
+                    double total = 0; int count = 0;
+                    foreach (var cell in group)
+                    {
+                        if (cell.imageWidth > 0)
+                        {
+                            if (count > 0) total += gap;
+                            total += cell.imageWidth;
+                            count++;
+                        }
+                    }
+                    grpWidths.Add(total);
+                }
+                maxNumGroups = Math.Max(maxNumGroups, grpWidths.Count);
+                nonDefWidths.Add(grpWidths);
+            }
+            var cellWidthList = new List<double>();
+            for (int i = 0; i < maxNumGroups; i++)
+            {
+                double maxW = 0;
+                foreach (var widths in nonDefWidths)
+                {
+                    if (i < widths.Count && widths[i] > maxW)
+                        maxW = widths[i];
+                }
+                cellWidthList.Add(maxW);
             }
 
-            //Console.WriteLine("Row Heights");
-            //foreach(double cellHeight in rowHeightList)
-            //{
-            //    Console.WriteLine(cellHeight);
-            //}
-            //Console.WriteLine();
+            // ------------------DEBUG LOG-------------------
+            //Console.WriteLine("Computed cellWidthList:");
+            //foreach(var w in cellWidthList)
+            //    Console.WriteLine(w);
+            // yup, that works
 
-            // compute cumulative Y positions for each row.
-            List<double> rowBaseYList = new List<double>();
-            double cumulativeY = 0;
+            // calc cellHeightList for non-default rows
+            int maxNumGroupsForHeight = 0;
+            var nonDefHeights = new List<List<double>>();
+            for (int r = 0; r < rowList.Count; r++)
+            {
+                bool defRow = true;
+                foreach (var group in rowList[r])
+                {
+                    if (group.Count == 0 || !group[0].isDefaultCell)
+                    {
+                        defRow = false;
+                        break;
+                    }
+                }
+                if (defRow) continue;
+                var grpHeights = new List<double>();
+                foreach (var group in rowList[r])
+                {
+                    double maxH = 0;
+                    foreach (var cell in group)
+                        if (cell.imageHeight > maxH)
+                            maxH = cell.imageHeight;
+                    grpHeights.Add(maxH);
+                }
+                maxNumGroupsForHeight = Math.Max(maxNumGroupsForHeight, grpHeights.Count);
+                nonDefHeights.Add(grpHeights);
+            }
+            var cellHeightList = new List<double>();
+            for (int i = 0; i < maxNumGroupsForHeight; i++)
+            {
+                double maxH = 0;
+                foreach (var heights in nonDefHeights)
+                {
+                    if (i < heights.Count && heights[i] > maxH)
+                        maxH = heights[i];
+                }
+                cellHeightList.Add(maxH);
+            }
+
+            // ------------------DEBUG LOG-------------------
+            //Console.WriteLine("Computed cellHeightList:");
+            //foreach (var h in cellHeightList)
+            //    Console.WriteLine(h);
+            // yup, that works
+
+            // calc rowBaseY for EVERY row.
+            var rowBaseYMapping = new Dictionary<int, double>();
+            double cumY = 0;
             for (int r = 0; r < numOfRow; r++)
             {
-                rowBaseYList.Add(cumulativeY);
-                cumulativeY += rowHeightList[r] + gap;
+                double rowH = 0;
+                bool defRow = true;
+                foreach (var group in rowList[r])
+                {
+                    if (group.Count == 0 || !group[0].isDefaultCell)
+                    {
+                        defRow = false; break;
+                    }
+                }
+                if (defRow)
+                    rowH = cellDic[(r, 0)].imageHeight;
+                else
+                {
+                    foreach (var group in rowList[r])
+                        foreach (var cell in group)
+                            if (cell.imageHeight > rowH)
+                                rowH = cell.imageHeight;
+                }
+                rowBaseYMapping[r] = cumY;
+                cumY += rowH + gap;
             }
 
-            // breaking align type into horizontal and vertical components.
-            string horizontalAlign, verticalAlign;
-            if (alignType.Equals("topleft") || alignType.Equals("left") || alignType.Equals("bottomleft"))
-                horizontalAlign = "left";
-            else if (alignType.Equals("topright") || alignType.Equals("right") || alignType.Equals("bottomright"))
-                horizontalAlign = "right";
-            else
-                horizontalAlign = "center";
+            // ------------------DEBUG LOG-------------------
+            //Console.WriteLine("Computed rowBaseYMapping:");
+            //foreach (var kvp in rowBaseYMapping)
+            //    Console.WriteLine($"Row {kvp.Key}: Base Y = {kvp.Value}");
+            // yup, that works
 
-            if (alignType.Equals("topleft") || alignType.Equals("top") || alignType.Equals("topright"))
-                verticalAlign = "top";
-            else if (alignType.Equals("bottomleft") || alignType.Equals("bottom") || alignType.Equals("bottomright"))
-                verticalAlign = "bottom";
-            else
-                verticalAlign = "center";
+            // setting up aligment types
+            string horAlign = (alignType == "topleft" || alignType == "left" || alignType == "bottomleft") ? "left" :
+                              (alignType == "topright" || alignType == "right" || alignType == "bottomright") ? "right" :
+                              "center";
+            string verAlign = (alignType == "topleft" || alignType == "top" || alignType == "topright") ? "top" :
+                              (alignType == "bottomleft" || alignType == "bottom" || alignType == "bottomright") ? "bottom" :
+                              "center";
 
+            // ------------------DEBUG LOG-------------------
+            //Console.WriteLine($"Horizontal Alignment: {horAlign}");
+            //Console.WriteLine($"Vertical Alignment: {verAlign}");
+            // yup, that works
+
+            // EVERYTHING FINE TILL HERE
+
+            // placing fucking junks
             // we'll have to assign positions for default and empty cells in grid order.
             // NOTE: for each row, go through each column and update X positions.
             for (int r = 0; r < numOfRow; r++)
             {
-                double currentX = 0;
-                for (int c = 0; c < numOfCol; c++)
+                // see if row is all default
+                bool defRow = true;
+                foreach (var group in rowList[r])
                 {
-                    Cell cellObj = cellDic[(r, c)];
-                    if (cellObj.isDefaultCell)
+                    if (group.Count == 0 || !group[0].isDefaultCell)
                     {
-                        cellObj.startPosX = currentX;
-                        cellObj.startPosY = rowBaseYList[r];
-                        cellObj.cellWidth = 20;
-                        cellObj.cellHeight = 10;
-                        currentX += 20 + gap;
-                    }
-                    else if (cellObj.isEmptyCell)
-                    {
-                        cellObj.startPosX = currentX;
-                        cellObj.startPosY = rowBaseYList[r];
-                        cellObj.cellWidth = 0;
-                        cellObj.cellHeight = rowHeightList[r];
-                        currentX += 0 + gap;
-                    }
-                    cellDic[(r, c)] = cellObj;
-                }
-            }
-
-            // placing fucking junks
-            for (int r = 0; r < numOfRow; r++)
-            {
-                List<List<Cell>> segments = rowList[r];
-                double baseY = rowBaseYList[r];
-                double rowHeight = rowHeightList[r];
-
-                // find where the first image cell should appear by scanning the row.
-                double groupBaseX = 0;
-                for (int c = 0; c < numOfCol; c++)
-                {
-                    Cell cellObj = cellDic[(r, c)];
-                    if (!cellObj.isDefaultCell && !cellObj.isEmptyCell)
-                    {
-                        groupBaseX = cellObj.startPosX;
+                        defRow = false;
                         break;
                     }
-                    else
+                }
+                // if yay?
+                if (defRow)
+                {
+                    double cumX = 0;
+                    for (int c = 0; c < numOfCol; c++)
                     {
-                        if (cellObj.isDefaultCell)
-                            groupBaseX += 20 + gap;
-                        else if (cellObj.isEmptyCell)
-                            groupBaseX += 0 + gap;
+                        var cell = cellDic[(r, c)];
+                        cell.startPosX = cumX;
+                        cell.startPosY = rowBaseYMapping[r];
+                        cell.cellWidth = cell.imageWidth;
+                        cell.cellHeight = cell.imageHeight;
+                        cumX += cell.imageWidth + gap;
+                        cellDic[(r, c)] = cell;
                     }
                 }
-
-                double cumulativeSegmentX = groupBaseX;
-
-                for (int segIndex = 0; segIndex < segments.Count; segIndex++)
+                // if nay?
+                else
                 {
-                    List<Cell> imageGroup = segments[segIndex];
-                    double allocatedWidth = cellWidthList[segIndex];
-
-                    // we need to think about the actual width of this group.
-                    double groupWidth = 0;
-                    for (int j = 0; j < imageGroup.Count; j++)
+                    double baseY = rowBaseYMapping[r];
+                    double rowH = 0;
+                    foreach (var group in rowList[r])
+                        foreach (var cell in group)
+                            if (cell.imageHeight > rowH)
+                                rowH = cell.imageHeight;
+                    double cumX = 0;
+                    for (int i = 0; i < rowList[r].Count; i++)
                     {
-                        groupWidth += imageGroup[j].imageWidth;
-                        if (j > 0)
+                        // we need to think about the actual width of this group.
+                        var group = rowList[r][i];
+                        double allocatedWidth = cellWidthList[i];
+                        double groupWidth = 0; int count = 0;
+                        foreach (var cell in group)
                         {
-                            groupWidth += gap;
+                            if (cell.imageWidth > 0)
+                            {
+                                if (count > 0) groupWidth += gap;
+                                groupWidth += cell.imageWidth;
+                                count++;
+                            }
                         }
-                    }
 
-                    // setting offsets
-                    double innerOffsetX = 0;
-                    if (horizontalAlign.Equals("center"))
-                        innerOffsetX = (allocatedWidth - groupWidth) / 2;
-                    else if (horizontalAlign.Equals("right"))
-                        innerOffsetX = allocatedWidth - groupWidth;
-
-                    double currentXWithinGroup = 0;
-                    foreach (Cell cellObj in imageGroup)
-                    {
-                        double finalX = cumulativeSegmentX + innerOffsetX + currentXWithinGroup;
-                        double innerOffsetY = 0;
-                        if (verticalAlign.Equals("center"))
-                            innerOffsetY = (rowHeight - cellObj.imageHeight) / 2;
-                        else if (verticalAlign.Equals("bottom"))
-                            innerOffsetY = rowHeight - cellObj.imageHeight;
-
-                        double finalY = baseY + innerOffsetY;
-
-                        cellObj.startPosX = finalX;
-                        cellObj.startPosY = finalY;
-                        cellObj.cellWidth = allocatedWidth;
-                        cellObj.cellHeight = rowHeight;
-
-                        cellDic[(cellObj.rowIndex, cellObj.colIndex)] = cellObj;
-
-                        currentXWithinGroup += cellObj.imageWidth;
-                        if (cellObj != imageGroup.Last())
+                        // setting offsets
+                        double offsetX = horAlign == "center" ? (allocatedWidth - groupWidth) / 2 :
+                                          horAlign == "right" ? allocatedWidth - groupWidth : 0;
+                        double curXWithin = 0;
+                        foreach (var cell in group)
                         {
-                            currentXWithinGroup += gap;
+                            double finalX = cumX + offsetX + curXWithin;
+                            double offY = verAlign == "center" ? (rowH - cell.imageHeight) / 2 :
+                                          verAlign == "bottom" ? rowH - cell.imageHeight : 0;
+                            double finalY = baseY + offY;
+                            cell.startPosX = finalX;
+                            cell.startPosY = finalY;
+                            cell.cellWidth = allocatedWidth;
+                            cell.cellHeight = rowH;
+                            cellDic[(cell.rowIndex, cell.colIndex)] = cell;
+                            curXWithin += cell.imageWidth;
+                            if (cell != group.Last()) curXWithin += gap;
                         }
+                        cumX += allocatedWidth + gap;
                     }
-                    cumulativeSegmentX += allocatedWidth;
                 }
             }
 
@@ -411,7 +319,34 @@ namespace Stemma.Middlewares.SvgCreator
             //    }
             //}
 
+            // throw new Exception("TESTING");
             return cellDic;
+        }
+
+        // nah... leave it here.
+        // this should work in any matter...? <= yeah, it works.
+        public enum CellGroupType { Image, Default, Empty }
+
+        public static CellGroupType GetCellGroupType(Cell cell)
+        {
+            if (!cell.isEmptyCell && !cell.isDefaultCell) return CellGroupType.Image;
+            else if (cell.isDefaultCell) return CellGroupType.Default;
+            else return CellGroupType.Empty;
+        }
+
+        // RULE34: merge if same type, or if current group is Image and next cell is EMPTY.
+        public static bool ShouldMerge(CellGroupType current, CellGroupType next)
+        {
+            return (current == CellGroupType.Image && next == CellGroupType.Empty) || current == next;
+        }
+
+        // custom segmentation for rows that are entirely default.
+        public static List<List<Cell>> Grouping(int row, int numOfCol, Dictionary<(int, int), Cell> cellDic)
+        {
+            var segments = new List<List<Cell>>();
+            for (int c = 0; c < numOfCol; c++)
+                segments.Add(new List<Cell>() { cellDic[(row, c)] });
+            return segments;
         }
     }
 }

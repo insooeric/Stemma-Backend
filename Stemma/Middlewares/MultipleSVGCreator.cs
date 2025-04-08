@@ -94,23 +94,23 @@ namespace Stemma.Middlewares
 
 
 
-            //Console.WriteLine("Grid:");
-            //for (int i = 0; i < numOfRow; i++)
-            //{
-            //    for (int j = 0; j < numOfCol; j++)
-            //    {
-            //        if (grid[i, j] != 0)
-            //            Console.Write(grid[i, j] + "\t");
-            //        else
-            //            Console.Write("0\t");
-            //    }
-            //    Console.WriteLine();
-            //}
+            Console.WriteLine("Grid:");
+            for (int i = 0; i < numOfRow; i++)
+            {
+                for (int j = 0; j < numOfCol; j++)
+                {
+                    if (grid[i, j] != 0)
+                        Console.Write(grid[i, j] + "\t");
+                    else
+                        Console.Write("0\t");
+                }
+                Console.WriteLine();
+            }
 
-            //Console.WriteLine("------end------");
+            Console.WriteLine("------end------");
 
-            double gridWidth = 0;
-            double gridHeight = 0;
+            //double gridWidth = 0;
+            //double gridHeight = 0;
 
             // List<Cell> cells = new List<Cell>();
             Dictionary<(int row, int col), Cell> cellDictionary = new Dictionary<(int, int), Cell>();

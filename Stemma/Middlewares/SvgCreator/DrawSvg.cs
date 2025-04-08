@@ -16,9 +16,10 @@ namespace Stemma.Middlewares.SvgCreator
 
             // ------------------DEBUG LOG-------------------
 
+
             //for (int r = 0; r < numOfRow; r++)
             //{
-            //    for(int c = 0; c < numOfCol; c++)
+            //    for (int c = 0; c < numOfCol; c++)
             //    {
             //        Cell cell = cellDic[(r, c)];
             //        Console.Write($"({cell.imageWidth}x{cell.imageHeight}, {cell.cellWidth}x{cell.cellHeight}) ");
@@ -96,10 +97,10 @@ namespace Stemma.Middlewares.SvgCreator
                     for (int r = 0; r < numOfRow; r++)
                     {
                         Cell cell = cellDic[(r, c)];
-                        if (cell.isEmptyCell)
-                        {
-                            continue;
-                        }
+                        //if (cell.isEmptyCell)
+                        //{
+                        //    continue;
+                        //}
                         maxGridHeight += cell.cellHeight;
 
                         currentNumOfGapInCol++;
@@ -115,6 +116,11 @@ namespace Stemma.Middlewares.SvgCreator
                 }
             }
 
+
+
+            gridWidth += numOfGapInRowList[selectedRowForGap] * (double)gap;
+            gridHeight += numOfGapInColList[selectedColForGap] * (double)gap;
+
             //foreach (int numOfGap in numOfGapInRowList)
             //{
             //    Console.WriteLine($"numOfGapInRowList: {numOfGap}");
@@ -127,9 +133,6 @@ namespace Stemma.Middlewares.SvgCreator
 
             //Console.WriteLine($"Selected Row for Gap: {numOfGapInRowList[selectedRowForGap]}");
             //Console.WriteLine($"Selected Col for Gap: {numOfGapInColList[selectedColForGap]}");
-
-            //gridWidth += numOfGapInRowList[selectedRowForGap] * (double)gap;
-            //gridHeight += numOfGapInColList[selectedColForGap] * (double)gap;
 
             //Console.WriteLine($"Grid size: {gridWidth} x {gridHeight}");
             //Console.WriteLine();

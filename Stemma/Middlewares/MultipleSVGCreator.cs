@@ -147,14 +147,18 @@ namespace Stemma.Middlewares
 
             //string innerSvg = "";
 
+            string resultSvg = "";
+
             Dictionary < (int row, int col), Cell > resultCellDic = new Dictionary<(int row, int col), Cell>();
             switch (fitContent)
             {
                 case "none":
                     resultCellDic = NoneFitSvg.Create(grid, cellDictionary, alignType, gap);
+                    resultSvg = DrawSvg.DrawNonFit(resultCellDic, grid, gap);
                     break;
                 case "row":
                     resultCellDic = RowFitSvg.Create(grid, cellDictionary, alignType, gap);
+                    resultSvg = DrawSvg.DrawRowFit(resultCellDic, grid, gap);
                     break;
                 case "col":
                     // TODO: yeah... work with this
@@ -169,7 +173,7 @@ namespace Stemma.Middlewares
             }
 
 
-            return DrawSvg.Draw(resultCellDic, grid, gap);
+            return resultSvg;
         }
     }
 }
